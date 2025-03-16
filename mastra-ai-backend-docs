@@ -1,0 +1,213 @@
+Installing Mastra Locally
+To run Mastra, you need access to an LLM. Typically, you’ll want to get an API key from an LLM provider such as OpenAI, Anthropic, or Google Gemini. You can also run Mastra with a local LLM using Ollama.
+
+Prerequisites
+Node.js v20.0 or higher
+Access to a supported large language model (LLM)
+Automatic Installation
+
+Create a New Project
+We recommend starting a new Mastra project using create-mastra, which will scaffold your project. To create a project, run:
+
+npm create mastra
+
+On installation, you’ll be guided through the following prompts:
+
+What do you want to name your project? my-mastra-app
+Choose components to install:
+  ◯ Agents (recommended)
+  ◯ Tools
+  ◯ Workflows
+Select default provider:
+  ◯ OpenAI (recommended)
+  ◯ Anthropic
+  ◯ Groq
+Would you like to include example code? No / Yes
+After the prompts, create-mastra will set up your project directory with TypeScript, install dependencies, and configure your selected components and LLM provider.
+
+Set Up your API Key
+Add the API key for your configured LLM provider in your .env file.
+
+.env
+
+OPENAI_API_KEY=<your-openai-key>
+
+Integrate Mastra in your Next.js project
+There are two main ways to integrate Mastra with your Next.js application: as a separate backend service or directly integrated into your Next.js app.
+
+1. Separate Backend Integration
+Best for larger projects where you want to:
+
+Scale your AI backend independently
+Keep clear separation of concerns
+Have more deployment flexibility
+Create Mastra Backend
+Create a new Mastra project using our CLI:
+
+npm create mastra
+
+For detailed setup instructions, see our installation guide.
+
+Install MastraClient
+npm install @mastra/client-js
+
+Use MastraClient
+Create a client instance and use it in your Next.js application:
+
+lib/mastra.ts
+
+import { MastraClient } from '@mastra/client-js';
+ 
+// Initialize the client
+export const mastraClient = new MastraClient({
+  baseUrl: process.env.NEXT_PUBLIC_MASTRA_API_URL || 'http://localhost:4111',
+});
+Example usage in your React component:
+
+app/components/SimpleWeather.tsx
+
+'use client'
+ 
+import { mastraClient } from '@/lib/mastra'
+ 
+export function SimpleWeather() {
+  async function handleSubmit(formData: FormData) {
+    const city = formData.get('city')
+    const agent = mastraClient.getAgent('weatherAgent')
+    
+    try {
+      const response = await agent.generate({
+        messages: [{ role: 'user', content: `What's the weather like in ${city}?` }],
+      })
+      // Handle the response
+      console.log(response.text)
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
+ 
+  return (
+    <form action={handleSubmit}>
+      <input name="city" placeholder="Enter city name" />
+      <button type="submit">Get Weather</button>
+    </form>
+  )
+}
+Deployment
+When you’re ready to deploy, you can use any of our platform-specific deployers (Vercel, Netlify, Cloudflare) or deploy to any Node.js hosting platform. Check our deployment guide for detailed instructions.
+
+Deploying Mastra Applications
+Mastra applications can be deployed in two ways:
+
+Direct Platform Deployment: Using platform-specific deployers for Cloudflare Workers, Vercel, or Netlify
+Universal Deployment: Using mastra build to generate a standard Node.js server that can run anywhere
+Prerequisites
+Before you begin, ensure you have:
+
+Node.js installed (version 18 or higher is recommended)
+If using a platform-specific deployer:
+An account with your chosen platform
+Required API keys or credentials
+Direct Platform Deployment
+Platform-specific deployers handle configuration and deployment for:
+
+Cloudflare Workers
+Vercel
+Netlify
+Installing Deployers
+# For Cloudflare
+npm install @mastra/deployer-cloudflare
+ 
+# For Vercel
+npm install @mastra/deployer-vercel
+ 
+# For Netlify
+npm install @mastra/deployer-netlify
+
+Configuring Deployers
+Configure the deployer in your entry file:
+
+import { Mastra, createLogger } from '@mastra/core';
+import { CloudflareDeployer } from '@mastra/deployer-cloudflare';
+ 
+export const mastra = new Mastra({
+  agents: { /* your agents here */ },
+  logger: createLogger({ name: 'MyApp', level: 'debug' }),
+  deployer: new CloudflareDeployer({
+    scope: 'your-cloudflare-scope',
+    projectName: 'your-project-name',
+    // See complete configuration options in the reference docs
+  }),
+});
+
+Deployer Configuration
+Each deployer has specific configuration options. Below are basic examples, but refer to the reference documentation for complete details.
+
+Cloudflare Deployer
+new CloudflareDeployer({
+  scope: 'your-cloudflare-account-id',
+  projectName: 'your-project-name',
+  // For complete configuration options, see the reference documentation
+})
+
+View Cloudflare Deployer Reference →
+
+Vercel Deployer
+new VercelDeployer({
+  teamId: 'your-vercel-team-id',
+  projectName: 'your-project-name',
+  token: 'your-vercel-token'
+  // For complete configuration options, see the reference documentation
+})
+
+View Vercel Deployer Reference →
+
+Netlify Deployer
+new NetlifyDeployer({
+  scope: 'your-netlify-team-slug',
+  projectName: 'your-project-name',
+  token: 'your-netlify-token'
+})
+
+View Netlify Deployer Reference →
+
+Universal Deployment
+Since Mastra builds to a standard Node.js server, you can deploy to any platform that runs Node.js applications:
+
+Cloud VMs (AWS EC2, DigitalOcean Droplets, GCP Compute Engine)
+Container platforms (Docker, Kubernetes)
+Platform as a Service (Heroku, Railway)
+Self-hosted servers
+Building
+Build the application:
+
+# Build from current directory
+mastra build
+ 
+# Or specify a directory
+mastra build --dir ./my-project
+
+The build process:
+
+Locates entry file (src/mastra/index.ts or src/mastra/index.js)
+Creates .mastra output directory
+Bundles code using Rollup with tree shaking and source maps
+Generates Hono HTTP server
+See mastra build for all options.
+
+Running the Server
+Start the HTTP server:
+
+node .mastra/index.js
+
+Environment Variables
+Required variables:
+
+Platform deployer variables (if using platform deployers):
+Platform credentials
+Agent API keys:
+OPENAI_API_KEY
+ANTHROPIC_API_KEY
+Server configuration (for universal deployment):
+PORT: HTTP server port (default: 3000)
+HOST: Server host (default: 0.0.0.0)
